@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>question generator</title>
-
-<br><br><br>
+    <title>Question Generator</title>
     <style>
-body {
+        body {
   font-family: 'Arial', sans-serif;
   line-height: 1.6;
   background-color: #f4f4f4;
@@ -23,6 +21,7 @@ body {
   padding: 20px;
   background-color: #fff;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 8px; /* Rounded corners for the container */
 }
 
 /* Styling for input fields */
@@ -33,6 +32,7 @@ input[type="number"] {
   margin-bottom: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  transition: border-color 0.3s ease-in-out; /* Smooth transition for border color */
 }
 
 /* Placeholder styling */
@@ -84,79 +84,96 @@ input[type="number"]:focus {
   border-color: #4a90e2;
   box-shadow: 0 0 3px #4a90e2;
 }
+
+/* Enhancing the visibility of the help text */
+h2 {
+  color: #333;
+  font-size: 1.2em;
+  margin-bottom: 20px; /* Add space below the help text */
+}
+
+/* Adding some padding to the top of the body to avoid abrupt starts */
+body {
+  padding-top: 20px;
+}
+
+/* Adjust the line height for better readability */
+body, h2, .output {
+  line-height: 1.4;
+}
+
     </style>
-<h2>
-help:<br>
-answer: 0 is 1, 1 is 2 and 2 is 3 ...<br><br>
-how to copy code: view js and click or tap copy.
-</h2>
 </head>
 <body>
-    <div>
-    <br><br><br></div>
     <div class="container">
-    <input type="text" placeholder="question"><br>
-    <input type="text" placeholder="option1"><br>
-    <input type="text" placeholder="option2"><br>
-    <input type="text" placeholder="option3"><br>
-    <input type="text" placeholder="option4"><br>
-    <input type="number" value="answer" placeholder="answer"><br>
-    <button>view js</button>
-    <button id="copy">copy</button>
-    <div class="output"></div>
+        <h2>Help: Answer mapping and instructions for copying code.</h2>
+        <input type="text" placeholder="question" aria-label="Enter your question"><br>
+        <input type="text" placeholder="option1" aria-label="Option 1"><br>
+        <input type="text" placeholder="option2" aria-label="Option 2"><br>
+        <input type="text" placeholder="option3" aria-label="Option 3"><br>
+        <input type="text" placeholder="option4" aria-label="Option 4"><br>
+        <input type="number" placeholder="answer" aria-label="Correct answer number"><br>
+        <button id="generate">Generate Code</button>
+        <button id="copy">Copy to Clipboard</button>
+        <div class="output" aria-live="polite"></div>
     </div>
     <script>
+document.addEventListener("DOMContentLoaded", () => {
+    const questionInput = document.querySelector('input[placeholder="question"]');
+    const optionInputs = document.querySelectorAll('input[placeholder^="option"]');
+    const answerInput = document.querySelector('input[type="number"]');
+    const outputDiv = document.querySelector('.output');
+    const generateButton = document.getElementById('generate');
+    const copyButton = document.getElementById('copy');
+    
+    // This array will hold all the question objects
+    let questionsStack = [];
 
-        document.addEventListener("DOMContentLoaded", function () {
-          const questionInput = document.querySelector('input[placeholder="question"]');
-          const optionInputs = document.querySelectorAll('input[placeholder^="option"]');
-          const answerInput = document.querySelector('input[type="number"]');
-          const outputDiv = document.querySelector('.output');
-          const copyButton = document.querySelector('#copy');
-          let codeStack = []; // Array to store the generated code for multiple questions
-          // Function to remove comments from code
-          function removeComments(code) {
-            return code.replace(/\/\/.*/g, ''); // Remove single-line comments
-          }
-  
-          copyButton.addEventListener('click', function () {
-            // Join and copy the code without comments and <br> tags
-            const codeToCopy = codeStack.map(removeComments).join('\n').replace(/<br>/g, '');
-            // Create a textarea element to hold the code
-            const codeTextArea = document.createElement('textarea');
-            codeTextArea.value = codeToCopy;
-            // Append the textarea to the document
-            document.body.appendChild(codeTextArea);
-            // Select the text within the textarea
-            codeTextArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(codeTextArea);
-          });
-          const generateButton = document.querySelector('button');
-          generateButton.addEventListener('click', function () {
-            const question = questionInput.value;
-            const options = Array.from(optionInputs).map((input) => input.value);
-            const answer = parseInt(answerInput.value);
+    generateButton.addEventListener('click', () => {
+        const question = questionInput.value.trim();
+        const options = Array.from(optionInputs).map(input => input.value.trim());
+        const answer = parseInt(answerInput.value, 10);
 
-            if (question.trim() === '' || options.some((option) => option.trim() === '') || isNaN(answer) || answer < 1 || answer > options.length) {
-              outputDiv.innerText = 'Please fill in all fields correctly.';
-            } else {
-              const codeString = `
-      {
-      const question = "${question}?";
-      const options = [${options.map(option => `"${option}"`).join(', ')}];
-      const answer = ${answer};
-      }`;
+        // Validation checks
+        if (!question || options.some(opt => !opt) || isNaN(answer) || answer < 1 || answer > options.length) {
+            outputDiv.textContent = 'Please fill in all fields correctly.';
+            return;
+        }
 
-              // Add the code to the stack
-              codeStack.push(codeString);
-              // Set the output to the entire stack without comments and <br> tags
-              outputDiv.innerHTML = codeStack.map(removeComments).join('\n');
-            }
-          });
-        });
-      </script>
+        // Create the question object
+        const questionObj = {
+            question: question + "?",
+            options: options,
+            answer: answer
+        };
+
+        // Add the new question object to the stack
+        questionsStack.push(questionObj);
+
+        // Display the stack in the output div
+        outputDiv.textContent = questionsStack.map(qObj => 
+         `            {
+            const question = "${qObj.question}";
+            const options = [${qObj.options.map(opt => `"${opt}"`).join(', ')}];
+            const answer = ${qObj.answer};
+            }`
+        ).join('\n\n');
+    });
+
+    copyButton.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(outputDiv.textContent);
+            console.log('Code copied to clipboard');
+        } catch (err) {
+            console.error('Error in copying text: ', err);
+        }
+    });
+});
+
+    </script>
 </body>
 </html>
+
+
 
 
