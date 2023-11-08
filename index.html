@@ -4,20 +4,92 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>question generator</title>
+
+<br><br><br>
     <style>
-        .output {
-         width: 509px;
-         height: 509px;
-         border: 1px solid black;
-        }
-        .container {
-  width: 40%;
-  margin: 0 auto;
+body {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+/* Centering the container */
+.container {
+  box-sizing: border-box;
+  width: 50%;
+  margin: 50px auto;
   padding: 20px;
   background-color: #fff;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Styling for input fields */
+input[type="text"],
+input[type="number"] {
+  width: calc(100% - 22px);
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Placeholder styling */
+::placeholder {
+  color: #888;
+}
+
+/* Button styling */
+button {
+  background-color: #5cb85c; /* Green */
+  color: white;
+  padding: 10px 20px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #4cae4c; /* Darker green */
+}
+
+/* Output div styling */
+.output {
+  width: 100%;
+  height: auto;
+  min-height: 150px;
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #e9e9e9;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow-y: auto; /* Adds scroll for overflow */
+  white-space: pre-wrap; /* Keeps the formatting for copied text */
+}
+
+/* Responsive container for smaller screens */
+@media (max-width: 768px) {
+  .container {
+    width: 80%;
+    margin-top: 20px;
+  }
+}
+
+/* Adding a bit of color to the inputs on focus */
+input[type="text"]:focus,
+input[type="number"]:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 3px #4a90e2;
 }
     </style>
+<h2>
+help:<br>
+answer: 0 is 1, 1 is 2 and 2 is 3 ...<br><br>
+how to copy code: view js and click or tap copy.
+</h2>
 </head>
 <body>
     <div>
@@ -28,12 +100,13 @@
     <input type="text" placeholder="option2"><br>
     <input type="text" placeholder="option3"><br>
     <input type="text" placeholder="option4"><br>
-    <input type="number" value="answer"><br>
+    <input type="number" value="answer" placeholder="answer"><br>
     <button>view js</button>
     <button id="copy">copy</button>
     <div class="output"></div>
     </div>
     <script>
+
         document.addEventListener("DOMContentLoaded", function () {
           const questionInput = document.querySelector('input[placeholder="question"]');
           const optionInputs = document.querySelectorAll('input[placeholder^="option"]');
@@ -41,69 +114,49 @@
           const outputDiv = document.querySelector('.output');
           const copyButton = document.querySelector('#copy');
           let codeStack = []; // Array to store the generated code for multiple questions
-      
           // Function to remove comments from code
           function removeComments(code) {
             return code.replace(/\/\/.*/g, ''); // Remove single-line comments
           }
-      
+  
           copyButton.addEventListener('click', function () {
             // Join and copy the code without comments and <br> tags
             const codeToCopy = codeStack.map(removeComments).join('\n').replace(/<br>/g, '');
-      
             // Create a textarea element to hold the code
             const codeTextArea = document.createElement('textarea');
             codeTextArea.value = codeToCopy;
-      
             // Append the textarea to the document
             document.body.appendChild(codeTextArea);
-      
             // Select the text within the textarea
             codeTextArea.select();
             document.execCommand('copy');
-      
-            // Remove the temporary textarea
             document.body.removeChild(codeTextArea);
           });
-      
           const generateButton = document.querySelector('button');
           generateButton.addEventListener('click', function () {
             const question = questionInput.value;
             const options = Array.from(optionInputs).map((input) => input.value);
             const answer = parseInt(answerInput.value);
-      
+
             if (question.trim() === '' || options.some((option) => option.trim() === '') || isNaN(answer) || answer < 1 || answer > options.length) {
               outputDiv.innerText = 'Please fill in all fields correctly.';
             } else {
               const codeString = `
       {
-        <br>
       const question = "${question}?";
       const options = [${options.map(option => `"${option}"`).join(', ')}];
       const answer = ${answer};
-      <br>
-      }
-      `;
-      
+      }`;
+
               // Add the code to the stack
               codeStack.push(codeString);
-      
               // Set the output to the entire stack without comments and <br> tags
               outputDiv.innerHTML = codeStack.map(removeComments).join('\n');
             }
           });
         });
       </script>
-      
-      
 </body>
 </html>
 
 
-
-
-
-
-
-
-  
